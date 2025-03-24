@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'pages/home.dart';
 import 'pages/notifications.dart';
@@ -29,35 +30,10 @@ class LuvixApp extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 0,
         ),
-        buttonTheme: const ButtonThemeData(
-          buttonColor: Colors.red,
-          textTheme: ButtonTextTheme.primary,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Colors.red,
-        ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           backgroundColor: Color(0xFF1E1E1E),
           selectedItemColor: Colors.red,
           unselectedItemColor: Colors.white70,
-          selectedIconTheme: IconThemeData(color: Colors.red),
-          unselectedIconTheme: IconThemeData(color: Colors.white70),
-          selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold),
-          unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500),
-          elevation: 0,
-        ),
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white70),
         ),
       ),
       routes: {
@@ -83,87 +59,118 @@ class _LuvixScreenState extends State<LuvixScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isMobile = Platform.isAndroid || Platform.isIOS;
+    bool isTablet =
+        MediaQuery.of(context).size.width >= 600 &&
+        MediaQuery.of(context).size.width < 1200;
+    bool isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: true,
         title: const Text('Luvix Social'),
         centerTitle: true,
-        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/profile');
-            },
+            onPressed: () => Navigator.pushNamed(context, '/profile'),
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/settings');
-            },
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
           ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.red),
-              child: Text('Luvix Social'),
-            ),
-            ListTile(
-              title: const Text('Home'),
-              onTap: () {
-                setState(() {
-                  currentPageIndex = 0;
-                });
-              },
-            ),
-            ListTile(
-              title: const Text('Notifications'),
-              onTap: () {
-                setState(() {
-                  Navigator.pushNamed(context, '/notifications');
-                });
-              },
-            ),
-            ListTile(
-              title: const Text('Profile'),
-              onTap: () {
-                Navigator.pushNamed(context, '/profile');
-              },
-            ),
-            ListTile(
-              title: const Text('Settings'),
-              onTap: () {
-                Navigator.pushNamed(context, '/settings');
-              },
-            ),
-          ],
+      drawer: isMobile ? _buildDrawer() : null,
+      body: Row(
+        children: [
+          if (isTablet || isDesktop) _buildSidebar(),
+          Expanded(child: pages[currentPageIndex]),
+        ],
+      ),
+      bottomNavigationBar: isMobile ? _buildBottomNavigationBar() : null,
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          const DrawerHeader(
+            decoration: BoxDecoration(color: Colors.red),
+            child: Text('Luvix Social'),
+          ),
+          _buildDrawerItem(
+            'Home',
+            Icons.home,
+            () => setState(() => currentPageIndex = 0),
+          ),
+          _buildDrawerItem(
+            'Notifications',
+            Icons.notifications,
+            () => setState(() => currentPageIndex = 1),
+          ),
+          _buildDrawerItem(
+            'Profile',
+            Icons.person,
+            () => Navigator.pushNamed(context, '/profile'),
+          ),
+          _buildDrawerItem(
+            'Settings',
+            Icons.settings,
+            () => Navigator.pushNamed(context, '/settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(String title, IconData icon, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.white70),
+      title: Text(title),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildSidebar() {
+    return NavigationRail(
+      selectedIndex: currentPageIndex,
+      backgroundColor: const Color(0xFF1E1E1E),
+      onDestinationSelected:
+          (index) => setState(() => currentPageIndex = index),
+      labelType: NavigationRailLabelType.all,
+      destinations: const [
+        NavigationRailDestination(
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home),
+          label: Text('Home'),
         ),
-      ),
-      body: pages[currentPageIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        onTap: (int index) {
-          setState(() {
-            currentPageIndex = index;
-          });
-        },
-        currentIndex: currentPageIndex,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            activeIcon: Icon(Icons.home),
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            activeIcon: Icon(Icons.notifications),
-            icon: Icon(Icons.notifications_outlined),
-            label: 'Notifications',
-          ),
-        ],
-      ),
+        NavigationRailDestination(
+          icon: Icon(Icons.notifications_outlined),
+          selectedIcon: Icon(Icons.notifications),
+          label: Text('Notifications'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return BottomNavigationBar(
+      currentIndex: currentPageIndex,
+      onTap: (index) => setState(() => currentPageIndex = index),
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home_outlined),
+          activeIcon: Icon(Icons.home),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.notifications_outlined),
+          activeIcon: Icon(Icons.notifications),
+          label: 'Notifications',
+        ),
+      ],
     );
   }
 }
