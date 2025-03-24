@@ -4,8 +4,43 @@ import 'pages/home.dart';
 import 'pages/notifications.dart';
 import 'pages/profile.dart';
 import 'pages/settings.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
-void main() {
+void requestNotificationPermission() async {
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+    print('User granted permission');
+  } else {
+    print('User declined permission');
+  }
+}
+
+void getFCMToken() async {
+  String? token = await FirebaseMessaging.instance.getToken();
+  print("FCM Token: $token");
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  requestNotificationPermission();
+  
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print("New message: ${message.notification?.title}");
+  });
+
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print("User tapped on notification: ${message.notification?.title}");
+  });
+
   runApp(const LuvixApp());
 }
 

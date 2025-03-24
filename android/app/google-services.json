@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "766375452602",
+    "project_id": "luvix-social",
+    "storage_bucket": "luvix-social.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:766375452602:android:65edcf7ccf54ea06eac783",
+        "android_client_info": {
+          "package_name": "com.purrquinox.luvixsocial"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnrQcj8jHo2KfwhAniDppOMsJkHpSu9xY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
