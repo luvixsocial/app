@@ -4,11 +4,13 @@ import 'pages/home.dart';
 import 'pages/notifications.dart';
 import 'pages/profile.dart';
 import 'pages/settings.dart';
+import 'pages/login.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
 
-void requestNotificationPermission() async {
+Future<bool> requestNotificationPermission() async {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
   NotificationSettings settings = await messaging.requestPermission(
     alert: true,
@@ -17,30 +19,23 @@ void requestNotificationPermission() async {
   );
 
   if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-    print('User granted permission');
+    return true;
   } else {
-    print('User declined permission');
+    return false;
   }
 }
 
-void getFCMToken() async {
+Future<String?> getFCMToken() async {
   String? token = await FirebaseMessaging.instance.getToken();
-  print("FCM Token: $token");
+  return token;
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   requestNotificationPermission();
-  
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print("New message: ${message.notification?.title}");
-  });
-
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print("User tapped on notification: ${message.notification?.title}");
-  });
-
   runApp(const LuvixApp());
 }
 
@@ -52,31 +47,43 @@ class LuvixApp extends StatelessWidget {
     return MaterialApp(
       title: 'Luvix Social',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF121212),
+      theme: ThemeData.dark().copyWith(
         primaryColor: Colors.red,
-        colorScheme: const ColorScheme.dark(
+        colorScheme: ColorScheme.dark(
           primary: Colors.red,
           secondary: Colors.redAccent,
         ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF1E1E1E),
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: Color(0xFF1E1E1E),
-          selectedItemColor: Colors.red,
-          unselectedItemColor: Colors.white70,
-        ),
       ),
       routes: {
+        '/login': (context) => const LoginPage(),
         '/profile': (context) => const Profile(),
         '/notifications': (context) => const Notifications(),
         '/settings': (context) => const Settings(),
+        '/home': (context) => const LuvixScreen(),
       },
-      home: const LuvixScreen(),
+      home: const AuthCheck(),
+    );
+  }
+}
+
+class AuthCheck extends StatelessWidget {
+  const AuthCheck({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasData) {
+          return const LuvixScreen();
+        }
+        return const LoginPage();
+      },
     );
   }
 }
