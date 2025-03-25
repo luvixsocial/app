@@ -35,6 +35,8 @@ void main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  FirebaseAuth.instance.signOut();
+  
   requestNotificationPermission();
   runApp(const LuvixApp());
 }
